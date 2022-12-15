@@ -6,6 +6,7 @@ import { User } from 'src/user/entities/user.entity';
 import { UserModule } from 'src/user/user.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { FacebookStrategy } from './strategies/facebook.strategy';
 import { GoogleStrategy } from './strategies/google.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
 
@@ -16,6 +17,6 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     PassportModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, GoogleStrategy, JwtStrategy],
+  providers: [AuthService, GoogleStrategy, FacebookStrategy, JwtStrategy],
 })
 export class AuthModule {}

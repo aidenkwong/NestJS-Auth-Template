@@ -9,9 +9,7 @@ import { Strategy, VerifyCallback } from 'passport-google-oauth2';
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
-  constructor(
-    @InjectRepository(User) private userRepository: Repository<User>,
-  ) {
+  constructor() {
     super({
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
