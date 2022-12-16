@@ -1,9 +1,12 @@
 import {
+  Body,
   Controller,
   Get,
   HttpStatus,
+  Post,
   Req,
   Res,
+  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import { UserRequest } from 'src/Interfaces/request.interface';
@@ -11,10 +14,41 @@ import { AuthService } from './auth.service';
 import { GoogleGuard } from './guards/google.guard';
 import { Response } from 'express';
 import { FacebookGuard } from './guards/facebook.guard';
+import { LoginUserDto, RegisterUserDto } from './dto/auth.dto';
+import { LocalGuard } from './guards/local.guard';
 
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
+
+  @Post('register')
+  async register(
+    @Body() body: RegisterUserDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const token = await this.authService.registerUser(body);
+    res.cookie('access_token', token, {
+      maxAge: 5184000000,
+      sameSite: true,
+      secure: false,
+    });
+    return token;
+  }
+
+  @Post('login')
+  @UseGuards(LocalGuard)
+  async login(
+    @Req() req: UserRequest,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const token = await this.authService.login(req.user);
+    res.cookie('access_token', token, {
+      maxAge: 5184000000,
+      sameSite: true,
+      secure: false,
+    });
+    return token;
+  }
 
   @Get('google')
   @UseGuards(GoogleGuard)
@@ -27,7 +61,7 @@ export class AuthController {
     @Req() req: UserRequest,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const token = await this.authService.signIn(req.user);
+    const token = await this.authService.login(req.user);
     res.cookie('access_token', token, {
       maxAge: 5184000000,
       sameSite: true,
@@ -47,7 +81,7 @@ export class AuthController {
     @Req() req: UserRequest,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const token = await this.authService.signIn(req.user);
+    const token = await this.authService.login(req.user);
     res.cookie('access_token', token, {
       maxAge: 5184000000,
       sameSite: true,

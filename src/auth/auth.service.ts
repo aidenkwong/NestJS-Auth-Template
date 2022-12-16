@@ -5,9 +5,10 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { QueryFailedError, Repository } from 'typeorm';
 import { User } from '../user/entities/user.entity';
 import { RegisterUserDto } from './dto/auth.dto';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
@@ -17,12 +18,19 @@ export class AuthService {
   ) {}
 
   generateJwt(payload) {
-    return this.jwtService.signAsync(payload, {
-      secret: process.env.JWT_SECRET,
-    });
+    return this.jwtService.sign(payload);
   }
 
-  async signIn(user) {
+  // async validateUser(email: string, password: string): Promise<any> {
+  //   const user = await this.userRepository.findOne(email);
+  //   if (user && user.password === pass) {
+  //     const { password, ...result } = user;
+  //     return result;
+  //   }
+  //   return null;
+  // }
+
+  async login(user) {
     if (!user) {
       throw new BadRequestException('Unauthenticated');
     }
@@ -40,21 +48,58 @@ export class AuthService {
   }
 
   async registerUser(user: RegisterUserDto) {
+    // Register user with email and password
+    if (user.password) {
+      try {
+        const salt = await bcrypt.genSalt();
+        const hash = await bcrypt.hash(user.password, salt);
+        await this.userRepository.save({
+          email: user.email,
+          password: hash,
+          salt,
+        });
+
+        const newUser = await this.userRepository.findOne({
+          where: { email: user.email },
+        });
+        return this.generateJwt({
+          sub: newUser.id,
+          email: newUser.email,
+        });
+      } catch (error) {
+        if (error.code === '23505') {
+          throw new BadRequestException('User already exists');
+        }
+      }
+    }
+
+    // Adding user from OAuth2 provider
     try {
       const newUser = this.userRepository.create(user);
-
       await this.userRepository.save(newUser);
-
       return this.generateJwt({
         sub: newUser.id,
         email: newUser.email,
       });
-    } catch {
-      throw new InternalServerErrorException();
+    } catch (err) {
+      throw new InternalServerErrorException(err);
     }
   }
 
-  async findUserByEmail(email) {
+  async validateUser(email: string, password: string): Promise<any> {
+    const user = await this.userRepository.findOne({ where: { email } });
+    if (!user) {
+      return null;
+    }
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return null;
+    }
+    delete user.password;
+    return user;
+  }
+
+  async findUserByEmail(email: string) {
     const user = await this.userRepository.findOne({ where: { email } });
     return user;
   }

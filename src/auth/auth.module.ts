@@ -9,14 +9,26 @@ import { AuthService } from './auth.service';
 import { FacebookStrategy } from './strategies/facebook.strategy';
 import { GoogleStrategy } from './strategies/google.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { LocalStrategy } from './strategies/local.strategy';
 
 @Module({
   imports: [
-    JwtModule.register({}),
+    JwtModule.registerAsync({
+      useFactory: () => ({
+        secret: process.env.JWT_SECRET,
+        signOptions: { expiresIn: '60d' },
+      }),
+    }),
     TypeOrmModule.forFeature([User]),
     PassportModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, GoogleStrategy, FacebookStrategy, JwtStrategy],
+  providers: [
+    AuthService,
+    GoogleStrategy,
+    FacebookStrategy,
+    JwtStrategy,
+    LocalStrategy,
+  ],
 })
 export class AuthModule {}
