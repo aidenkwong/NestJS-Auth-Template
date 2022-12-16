@@ -2,11 +2,9 @@ import {
   Body,
   Controller,
   Get,
-  HttpStatus,
   Post,
   Req,
   Res,
-  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import { UserRequest } from 'src/Interfaces/request.interface';
@@ -14,7 +12,7 @@ import { AuthService } from './auth.service';
 import { GoogleGuard } from './guards/google.guard';
 import { Response } from 'express';
 import { FacebookGuard } from './guards/facebook.guard';
-import { LoginUserDto, RegisterUserDto } from './dto/auth.dto';
+import { RegisterUserDto } from './dto/auth.dto';
 import { LocalGuard } from './guards/local.guard';
 
 @Controller('auth')
