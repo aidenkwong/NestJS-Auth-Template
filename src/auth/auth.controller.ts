@@ -7,7 +7,11 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
-import { UserRequest } from 'src/Interfaces/request.interface';
+import {
+  FacebookUserRequest,
+  GoogleUserRequest,
+  UserRequest,
+} from 'src/Interfaces/request.interface';
 import { AuthService } from './auth.service';
 import { GoogleGuard } from './guards/google.guard';
 import { Response } from 'express';
@@ -56,7 +60,7 @@ export class AuthController {
   @Get('google/callback')
   @UseGuards(GoogleGuard)
   async googleAuthCallback(
-    @Req() req: UserRequest,
+    @Req() req: GoogleUserRequest,
     @Res({ passthrough: true }) res: Response,
   ) {
     const token = await this.authService.login(req.user);
@@ -65,7 +69,16 @@ export class AuthController {
       sameSite: true,
       secure: false,
     });
-    return token;
+    return `
+    <h3>Successfully log in with Google</h3>
+    <p>Provider: ${req.user.provider}</p>
+    <p>Provider ID: ${req.user.providerId}</p>
+    <p>Email: ${req.user.email}</p>
+    <p>Given Name: ${req.user.givenName}</p>
+    <p>Family Name: ${req.user.familyName}</p>
+    <p>Jwt Token from Our Server: ${token}</p>
+    <a href="/">Go to Home Page</a>
+    `;
   }
 
   @Get('facebook')
@@ -76,7 +89,7 @@ export class AuthController {
   @Get('facebook/callback')
   @UseGuards(FacebookGuard)
   async facebookAuthCallback(
-    @Req() req: UserRequest,
+    @Req() req: FacebookUserRequest,
     @Res({ passthrough: true }) res: Response,
   ) {
     const token = await this.authService.login(req.user);
@@ -85,6 +98,15 @@ export class AuthController {
       sameSite: true,
       secure: false,
     });
-    return token;
+    return `
+    <h3>Successfully log in with Facebook</h3>
+    <p>Provider: ${req.user.provider}</p>
+    <p>Provider ID: ${req.user.providerId}</p>
+    <p>Email: ${req.user.email}</p>
+    <p>Given Name: ${req.user.givenName}</p>
+    <p>Family Name: ${req.user.familyName}</p>
+    <p>Jwt Token from Our Server: ${token}</p>
+    <a href="/">Go to Home Page</a>
+    `;
   }
 }
